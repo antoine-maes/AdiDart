@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adidart - Cricket</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'mainApp/styles/crik.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Ubuntu:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        var mqtt;
+        var reconnectTimeout = 2000;
+        var host = "192.168.0.8";
+        var port=9001;
+        let nbPlayer = '{{nbPlayer}}';
+
+        let Cible = []; 
+        let Score = [];
+        let AsyncRep = 0;
+        let validation = true;
+
+
+        function CreateDivPlayer(){
+            var divPlayer = document.createElement("div");
+            divPlayer.setAttribute('id','Player'+numPlayer);
+            divPlayer.setAttribute('class','Player');
+            document.getElementById("Player").appendChild(divPlayer);
+            affichageNumPlayer = numPlayer + 1
+            document.getElementById("Player"+numPlayer).innerHTML="<h1>Joueur "+affichageNumPlayer+"</h1>";
+        }
+        function CreateScoreboard(){
+            var divScore = document.createElement("div");
+            divScore.setAttribute('id','SBPlayer'+numPlayer);
+            divScore.setAttribute('class','score');
+            document.getElementById("scoreboard").appendChild(divScore);
+            for (i=0; i < 8; i++){
+                    var divCell = document.createElement("div");
+                    divCell.setAttribute('id',i+"Player"+numPlayer);
+                    divCell.setAttribute('class','cell');
+                    document.getElementById("SBPlayer"+numPlayer).appendChild(divCell);
+
+                    var divDot = document.createElement("div");
+                    divDot.setAttribute('id',i+"dotPlayer"+numPlayer);
+                    divDot.setAttribute('class', 'dot');
+                    document.getElementById(i+"Player"+numPlayer).appendChild(divDot);
+
+                    var divBarre1 = document.createElement("div");
+                    divBarre1.setAttribute('id',i+"Barre1Player"+numPlayer);
+                    divBarre1.setAttribute('class', 'barre1');
+                    document.getElementById(i+"Player"+numPlayer).appendChild(divBarre1);
+
+                    var divBarre2 = document.createElement("div");
+                    divBarre2.setAttribute('id',i+"Barre2Player"+numPlayer);
+                    divBarre2.setAttribute('class', 'barre2');
+                    document.getElementById(i+"Player"+numPlayer).appendChild(divBarre2);
+
+
+                }
+        }
+        function InputScore(){
+            Cible.push([0,0,0,0,0,0,0]);
+            Score[numPlayer] = 0;
+            document.getElementById("7Player"+numPlayer).innerHTML="<h1>0</h1>"
+        }
+
+        function StartGame(){
+            for (numPlayer=0; numPlayer < nbPlayer; numPlayer++){
+                CreateDivPlayer();
+                CreateScoreboard();
+                InputScore();
+                
+                
+            }
+            document.getElementById("ContainerChangementJoueur").style.opacity="0";
+
+            player = 0;
+            tir = 0;
+            for (i = 0; i<nbPlayer; i++){
+                        if (i == player){
+                            document.getElementById("Player"+i).style.background="white";
+                            for (a=0; a<8; a++){
+                                document.getElementById(a+"Player"+i).style.background="white";
+                            }
+
+                        }
+                        else{
+                            document.getElementById("Player"+i).style.background="rgba(255, 255, 255, 0.5)";
+                            for (a=0; a<8; a++){
+                                document.getElementById(a+"Player"+i).style.background="rgba(255, 255, 255, 0.5)";
+                            }
+
+                            
+                        }
+            }
+            
+        }
+        function StopGame(){
+            document.getElementById("winner").innerHTML="<h2>Gagnant: Joueur "+winner+"</h2>";
+            document.getElementById("ContainerFinJeu").style.opacity="1";
+            let containers = document.getElementsByClassName("OptionFinJeu")
+            let index = 0;
+
+            document.addEventListener("keydown", (e) => {
+            e = e || window.event;
+            Array.from(containers).forEach(el => {
+              el.classList.remove("containerHover")
+            });
+            if(e.keyCode == 40) {
+              window.location.replace("/");
+            }
+          
+            if (e.keyCode === 38 && index === -1) {
+              location.href(containers[0].getAttribute("href"))
+              }
+          
+            if (e.keyCode === 37) {
+              if (index != 0) {
+                index--;
+              } else {
+                index = containers.length - 1;
+              }
+            } 
+            else if (e.keyCode === 39) {
+              if (index != containers.length - 1) {
+                index++
+              } else {
+                index = 0
+              }
+            }
+          
+            containers[index].classList.add("containerHover");
+          
+            if (e.keyCode === 38) {
+              window.location.href = containers[index].getAttribute("href")
+            }
+          })
+
+        }
+
+        function CheckIfWin(){
+            console.log("checkwin")
+            for (i=0; i < nbPlayer; i++){
+                //check if player shot all the targets
+                if (JSON.stringify(Cible[i]) == JSON.stringify([3,3,3,3,3,3,3])){
+                    //Check if player i got most points
+                    for(k=0; k < nbPlayer; k++){
+                        if (i != k){
+                            if (Score[i] > Score[k]){
+                                console.log("break");
+                            }else{
+                                console.log('end');
+                                winner = i;
+                                StopGame();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        function DetectBackToMenu(){
+            document.addEventListener("keydown", (e) => {
+                e = e || window.event;
+                if(e.keyCode == 40) {
+                    window.location.replace("/");
+                }
+            })
+        }
+        function onConnect() {
+            console.log("connected");
+            mqtt.subscribe("data");
+        }
+
+        function onFailure(message) {
+            setTimeout(MQTTconnect, reconnectTimeout);
+        }
+
+        
+        
+
+        function GivePoints(){
+            for(i=0; i < nbPlayer; i++){
+                if (Cible[i][key] < 3){
+                    Score[i]= parseInt(Score[i]) + (value*mult);
+                    document.getElementById("7Player"+i).innerHTML="<h1>"+parseInt(Score[i])+"</h1>"
+
+                }
+            }
+        }
+        function translateKey(){
+            if (parseInt(value) == 15){
+                key = 0;
+            }
+            else if (parseInt(value) == 16){
+                key = 1;
+            }
+            else if (parseInt(value) == 17){
+                key = 2;
+            }
+            else if (parseInt(value) == 18){
+                key = 3;
+            }
+            else if (parseInt(value) == 19){
+                key = 4;
+            }
+            else if (parseInt(value) == 20){
+                key = 5;
+            }
+            else if (parseInt(value) == 25){
+                key = 6;
+            }
+            else {
+                key = 100;
+            }
+        }
+        function waitingKeypress() {
+            return new Promise((resolve) => {
+                document.addEventListener('keydown', onKeyHandler);
+                function onKeyHandler(e) {
+                    DetectBackToMenu()
+                    if (e.keyCode === 38) {
+                        document.removeEventListener('keydown', onKeyHandler);
+                        resolve();
+                        AsyncRep++;
+                    }
+                }
+            });
+        }
+        function ChangementJoueur(){
+                if (player == (nbPlayer-1)){    player = 0; }else{   player++;  }
+                for (i = 0; i<nbPlayer; i++){
+                        if (i == player){
+                            document.getElementById("Player"+i).style.background="white";
+                            for (a=0; a<8; a++){
+                                document.getElementById(a+"Player"+i).style.background="white";
+                            }
+                            
+                        }
+                        else{
+                            document.getElementById("Player"+i).style.background="rgba(255, 255, 255, 0.5)";
+                            for (a=0; a<8; a++){
+                                document.getElementById(a+"Player"+i).style.background="rgba(255, 255, 255, 0.5)";
+                            }
+                        }
+                }
+                document.getElementById("ContainerChangementJoueur").style.opacity="0";
+                tir=0;
+                document.getElementById("tir1").style.opacity="1";
+                document.getElementById("tir2").style.opacity="1";
+                document.getElementById("tir3").style.opacity="1";
+
+            }
+
+        async function GestionTir(){
+            if(validation == true){
+                tir++;
+            }
+           
+            if (tir==3){
+                validation = false;
+                if (AsyncRep==0){
+                    CheckIfWin();
+                    document.getElementById("tir3").style.opacity="0";
+                    document.getElementById("ContainerChangementJoueur").style.opacity="1";
+
+                }
+                await waitingKeypress();
+                if (AsyncRep==1){
+                    AsyncValidation = true;
+                    ChangementJoueur();
+
+                }
+            }
+
+            if (tir==2){
+                validation = false;
+                AsyncValidation = true;
+                CheckIfWin();
+                document.getElementById("tir2").style.opacity="0";
+            }
+
+            if (tir==1){
+                AsyncValidation = true;
+                validation = false;
+                CheckIfWin();
+                document.getElementById("tir1").style.opacity="0";
+            }
+
+            if (AsyncValidation == true){
+                mqtt.disconnect();
+                AsyncValidation = false;
+                validation = true;
+                Game();
+            }
+
+            
+            
+        }
+        function DisplayDataCible(){
+            console.log(123);
+            if (Cible[player][key] == 1){
+                document.getElementById(key+"Barre2Player"+player).style.opacity="1";
+            }
+            else if (Cible[player][key] == 2){
+                document.getElementById(key+"Barre2Player"+player).style.opacity="1";
+                document.getElementById(key+"Barre1Player"+player).style.opacity="1";
+
+            }
+            else if (Cible[player][key] == 3){
+                document.getElementById(key+"Barre2Player"+player).style.opacity="1";
+                document.getElementById(key+"Barre1Player"+player).style.opacity="1";
+                document.getElementById(key+"dotPlayer"+player).style.opacity="1";
+                
+            }
+            else{
+                document.getElementById(key+"Barre2Player"+player).style.opacity="0";
+                document.getElementById(key+"Barre1Player"+player).style.opacity="0";
+                document.getElementById(key+"dotPlayer"+player).style.opacity="0";
+            }
+            console.table(Cible);
+        }
+
+        function AnalyzeData(){
+            const Buzz = document.querySelector("audio");
+
+            if(validation == true){
+                translateKey();
+                console.log(key);
+                Buzz.play();
+
+                if (key != 100){
+                    if (Cible[player][key] > 2){
+                        GivePoints();
+                    }
+                    else {
+                        multFor = mult;
+                        for (i=1; i<(multFor+1); i++){
+                            if ((parseInt(Cible[player][key]) + 1)>3){
+                                mult=1;
+                                GivePoints();
+                            }
+                            else{
+                                Cible[player][key] = parseInt(Cible[player][key]) + 1;
+                            }
+                            DisplayDataCible();
+                            
+                            
+                        }
+                    }
+                } 
+                //console.log(Score);
+                //console.table(Cible);
+                GestionTir();
+            }
+        }
+        
+
+        
+
+
+
+
+        function onMessageArrived(msg) {
+
+            DetectBackToMenu()
+            key = 100;
+            AsyncRep = 0;
+            out_msg=JSON.parse(msg.payloadString);
+            mult = parseInt(out_msg.mult);
+            value = parseInt(out_msg.value);
+            multbull= parseInt(out_msg.multbull);
+            if (value == 25){
+                mult = multbull;
+            }
+            console.log(123);
+            AnalyzeData();  
+        }
+
+        function MQTTconnect(){
+            mqtt = new Paho.MQTT.Client(host, port,"clientjs");
+            var options={
+                timeout:3,
+                onSuccess:onConnect,
+                onFailure:onFailure,
+            };
+            mqtt.onMessageArrived = onMessageArrived;
+            mqtt.connect(options);
+        }
+
+        function Game(){
+            DetectBackToMenu();
+            MQTTconnect();
+        }
+
+
+
+    </script>
+
+    <style>
+        #ContainerChangementJoueur{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    position:fixed;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+}
+
+.ChangementJoueur{
+    width: 50vw;
+    height: 300px;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+    border:3px solid rgba(255, 255, 255, 1);
+    border-radius: 20px;
+    display: flex;
+    text-align: center;
+    align-items: center;
+}
+#ContainerFinJeu{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 3rem;
+    position: fixed;
+    backdrop-filter: blur(7.5px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+    
+}
+.FinJeu{
+    width: 80vw;
+    height: 300px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -150px;
+}
+.OptionFinJeu{
+    width: 300px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(40px);
+    margin: 40px;
+    -webkit-backdrop-filter: blur(40px);
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: all ease-in 0.2s;
+    color: black;
+    border-radius: 20px;
+    font-size: 1rem;
+    display: flex;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.containerHover {
+          cursor: pointer;
+          background: rgba(255, 255, 255, 1 )!important;
+          transition: all ease-in 0.2s;
+          box-shadow: 0px 0px 30px rgba(0,0,0,0.2); 
+        }
+
+        .dot{
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: solid 4px black;
+        position:fixed;
+        opacity: 0;
+    }
+    .barre1{
+        width: 65px;
+        height: 4px;
+        transform: rotate(45deg);
+        background-color: black;
+        border-radius: 5px;
+        position: fixed;
+        opacity: 0;
+    }
+    .barre2{
+        width: 65px;
+        height: 4px;
+        transform: rotate(-45deg);
+        background-color: black;
+        border-radius: 5px;
+        position: fixed;
+        opacity: 0;
+
+    }
+    .classement{
+        height: 150px;
+        width: 500px;
+        background-color: rgba(255, 255, 255, 1);
+        display: flex;
+        backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+        justify-content: center;
+        align-items: center;
+        border-radius: 20px;
+        box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+
+        font-size: 2rem;
+    }
+
+    </style>
+    
+
+</head>
+<body>
+    <audio src="{% static 'buzz.mp3' %}" type="audio/mpeg"></audio>
+    
+    <div id="ContainerFinJeu">
+        <div class="classement">
+            <div id="winner"class="winner"><h2>Gagnant : Joueur 1</h2></div>
+        </div>
+        <div class="FinJeu">
+            <a href="/Game/?jeu=cricket&nbPlayer={{nbPlayer}}" class="OptionFinJeu containerHover"><h1>Recommencer</h1></a>
+            <a href="/" class="OptionFinJeu"><h1>Menu Principal</h1></a>
+        </div>
+    </div>
+    <div id="ContainerChangementJoueur">
+        <div class="ChangementJoueur">
+            <h4 class="changement">Appuyez sur un bouton pour changer de joueur</h4>
+        </div>
+    </div>
+    <div class="background">
+        <div class="containerScoreboard">
+            <div id="Player" class="containerPlayer">
+                <div class="Player"><h1>Player 0</h1></div>
+            </div>    
+            <div id="scoreboard" class="scoreboard">
+                <div class="score">
+                    <div class="cell info"><h2>15</h2></div>
+                    <div class="cell info"><h2>16</h2></div>
+                    <div class="cell info"><h2>17</h2></div>
+                    <div class="cell info"><h2>18</h2></div>
+                    <div class="cell info"><h2>19</h2></div>
+                    <div class="cell info"><h2>20</h2></div>
+                    <div class="cell info"><h2>Bull</h2></div>
+                    <div class="cell info"><h2>Score</h2></div>
+                </div>
+            </div>
+           
+            
+        </div>
+        <div class="containerLancer">
+            <div class="lancer"><img id="tir1" src="{% static "mainApp/dart.png" %}" /></div>
+            <div class="lancer"><img id="tir2" src="{% static "mainApp/dart.png" %}" /></div>
+            <div class="lancer"><img id="tir3" src="{% static "mainApp/dart.png" %}" /></div>
+
+        </div>
+        
+    </div>
+     
+    <script>
+        StartGame();
+        Game();
+    </script>
+</body>
+</html>

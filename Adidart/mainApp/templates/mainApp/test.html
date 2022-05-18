@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    .container{
+        width: 100px;
+        height: 100px;
+        background-color: aqua;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .dot{
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: solid 7.5px black;
+        position:fixed;
+    }
+    .barre1{
+        width: 80px;
+        height: 8px;
+        transform: rotate(45deg);
+        background-color: black;
+        border-radius: 5px;
+        position: fixed;
+    }
+    .barre2{
+        width: 80px;
+        height: 8px;
+        transform: rotate(-45deg);
+        background-color: black;
+        border-radius: 5px;
+        position: fixed;
+
+    }
+</style>
+<body>
+    <div class="container">
+        <div class="dot"></div>
+        <div class="barre1"></div>
+        <div class="barre2"></div>
+    </div>
+    
+</body>
+</html>
