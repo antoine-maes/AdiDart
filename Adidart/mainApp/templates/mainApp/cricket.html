@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adidart - Cricket</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'mainApp/styles/crik.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mainApp/styles/criket.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Ubuntu:wght@400;500&display=swap" rel="stylesheet">
@@ -24,6 +24,7 @@
         let Score = [];
         let AsyncRep = 0;
         let validation = true;
+        let value = 0;
 
 
         function CreateDivPlayer(){
@@ -78,6 +79,8 @@
                 
             }
             document.getElementById("ContainerChangementJoueur").style.opacity="0";
+            document.getElementById("ContainerFinJeu").style.opacity="0";
+
 
             player = 0;
             tir = 0;
@@ -231,6 +234,16 @@
                 }
             });
         }
+
+        async function waiting(){
+            console.log("Waiting for keypress...");
+            document.getElementById("ContainerStartGame").style.opacity="1";
+            await waitingKeypress();
+            if (AsyncRep ==1){
+                document.getElementById("ContainerStartGame").style.opacity="0";
+                Game();
+            }
+        }
         function ChangementJoueur(){
                 if (player == (nbPlayer-1)){    player = 0; }else{   player++;  }
                 for (i = 0; i<nbPlayer; i++){
@@ -267,13 +280,11 @@
                     CheckIfWin();
                     document.getElementById("tir3").style.opacity="0";
                     document.getElementById("ContainerChangementJoueur").style.opacity="1";
-
                 }
                 await waitingKeypress();
                 if (AsyncRep==1){
                     AsyncValidation = true;
                     ChangementJoueur();
-
                 }
             }
 
@@ -302,7 +313,6 @@
             
         }
         function DisplayDataCible(){
-            console.log(123);
             if (Cible[player][key] == 1){
                 document.getElementById(key+"Barre2Player"+player).style.opacity="1";
             }
@@ -330,7 +340,6 @@
 
             if(validation == true){
                 translateKey();
-                console.log(key);
                 Buzz.play();
 
                 if (key != 100){
@@ -374,10 +383,6 @@
             mult = parseInt(out_msg.mult);
             value = parseInt(out_msg.value);
             multbull= parseInt(out_msg.multbull);
-            if (value == 25){
-                mult = multbull;
-            }
-            console.log(123);
             AnalyzeData();  
         }
 
@@ -393,6 +398,7 @@
         }
 
         function Game(){
+            console.log("Game")
             DetectBackToMenu();
             MQTTconnect();
         }
@@ -415,6 +421,20 @@
     z-index: 100;
     opacity: 0;
 }
+#ContainerStartGame{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    position:fixed;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+
+}
 
 .ChangementJoueur{
     width: 50vw;
@@ -435,29 +455,29 @@
     justify-content: space-around;
     align-items: center;
     font-size: 3rem;
+    z-index: 1000;
     position: fixed;
     backdrop-filter: blur(7.5px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 100;
-    opacity: 0;
+    opacity: 1;
+    margin: 0;
     
 }
 .FinJeu{
-    width: 80vw;
-    height: 300px;
+    width: 50vw;
+    height: 150px;
     border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-top: -150px;
+    background: rgba(255, 255, 255, 0.4);
 }
 .OptionFinJeu{
     width: 300px;
     height: 100px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(40px);
     margin: 40px;
-    -webkit-backdrop-filter: blur(40px);
     text-decoration: none;
     box-sizing: border-box;
     transition: all ease-in 0.2s;
@@ -465,7 +485,7 @@
     border-radius: 20px;
     font-size: 1rem;
     display: flex;
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1); 
 
     align-items: center;
     justify-content: center;
@@ -516,9 +536,17 @@
         align-items: center;
         border-radius: 20px;
         box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+        margin-top: -150px;
 
         font-size: 2rem;
     }
+    h3{
+        margin: 0;
+    }
+    .winner{
+        margin: 0;
+    }
+    h2{margin: 0;}
 
     </style>
     
@@ -528,8 +556,11 @@
     <audio src="{% static 'buzz.mp3' %}" type="audio/mpeg"></audio>
     
     <div id="ContainerFinJeu">
+        <div class="titlefinjeu">        
+            <h2>Partie terminée ! </h2>
+        </div>
         <div class="classement">
-            <div id="winner"class="winner"><h2>Gagnant : Joueur 1</h2></div>
+            <div id="winner"class="winner"></div>
         </div>
         <div class="FinJeu">
             <a href="/Game/?jeu=cricket&nbPlayer={{nbPlayer}}" class="OptionFinJeu containerHover"><h1>Recommencer</h1></a>
@@ -538,7 +569,12 @@
     </div>
     <div id="ContainerChangementJoueur">
         <div class="ChangementJoueur">
-            <h4 class="changement">Appuyez sur un bouton pour changer de joueur</h4>
+            <h3 class="changement">Retirez vos flechettes et appuyez sur valider pour confirmer</h3>
+        </div>
+    </div>
+    <div id="ContainerStartGame">
+        <div class="ChangementJoueur">
+            <h3 class="changement">Appuyez sur valider pour lancer la partie</h3>
         </div>
     </div>
     <div class="background">
@@ -572,7 +608,9 @@
      
     <script>
         StartGame();
-        Game();
+        waiting();
+        
+        
     </script>
 </body>
 </html>

@@ -47,8 +47,7 @@ body{
     align-items: center;
     flex-direction: column;
     position: absolute;
-    background: rgb(255,183,0);
-    background: linear-gradient(45deg, rgba(255,183,0,1) 10%, rgba(117,207,107,1) 50%, rgba(83,194,255,1) 90%);
+    background: #3D9970;    ;
 }
 .container-points{
     padding-top: 100px;
@@ -124,34 +123,11 @@ img{
     text-align: center;
     align-items: center;
 }
-#ContainerFinJeu{
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    align-items: center;
-    font-size: 3rem;
-    position: fixed;
-    backdrop-filter: blur(7.5px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 100;
-    opacity: 0;
-    
-}
-.FinJeu{
-    width: 80vw;
-    height: 300px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: -150px;
-}
+
+
 .OptionFinJeu{
     width: 300px;
     height: 100px;
-    background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(40px);
     margin: 40px;
     -webkit-backdrop-filter: blur(40px);
@@ -162,8 +138,6 @@ img{
     border-radius: 20px;
     font-size: 1rem;
     display: flex;
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
-
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -174,17 +148,3 @@ img{
           transition: all ease-in 0.2s;
           box-shadow: 0px 0px 30px rgba(0,0,0,0.2); 
         }
-.classement{
-    height: 150px;
-    width: 500px;
-    background-color: rgba(255, 255, 255, 1);
-    display: flex;
-    backdrop-filter: blur(40px);
--webkit-backdrop-filter: blur(40px);
-    justify-content: center;
-    align-items: center;
-    border-radius: 20px;
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
-
-    font-size: 2rem;
-}

@@ -27,6 +27,7 @@
         let validation = true;
         let AsyncRep = 0;
         let PointTour = 0;
+        let Player = 0;
 
         function onConnect() {
             console.log("connected");
@@ -207,6 +208,10 @@
             out_msg=JSON.parse(msg.payloadString);
             mult = parseInt(out_msg.mult);
             value = parseInt(out_msg.value);
+            console.log(mult);
+            if (mult==100){
+                return
+            }
             out_msg = (value*mult);
             GameCalcPoints();  
         }
@@ -248,6 +253,7 @@
             document.getElementById("Player"+numPlayer).style.background="rgba(255, 255, 255, 1)";
             document.getElementById("ContainerChangementJoueur").style.opacity="0";
             document.getElementById("ContainerFinJeu").style.opacity="0";
+
 
             PointTour = 0;
 
@@ -293,9 +299,15 @@
               window.location.href = containers[index].getAttribute("href")
             }
           })
-
-            
-
+        }
+        async function waiting(){
+            console.log("Waiting for keypress...");
+            document.getElementById("ContainerStartGame").style.opacity="1";
+            await waitingKeypress();
+            if (AsyncRep ==1){
+                document.getElementById("ContainerStartGame").style.opacity="0";
+                Game();
+            }
         }
 
         function Game(){
@@ -318,18 +330,94 @@
     </script>
 
 </head>
+<style>
+    .FinJeu{
+    width: 50vw;
+    height: 150px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -150px;
+    background: rgba(255, 255, 255, 0.4);
+}
+.classement{
+        height: 150px;
+        width: 500px;
+        background-color: rgba(255, 255, 255, 1);
+        display: flex;
+        backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+        justify-content: center;
+        align-items: center;
+        border-radius: 20px;
+        box-shadow: 0px 0px 15px rgba(0,0,0,0.2); 
+        margin-top: -150px;
+
+        font-size: 2rem;
+    }
+    h3{
+        margin: 0;
+    }
+    .winner{
+        margin: 0;
+    }
+    h2{margin: 0;}
+
+    
+
+    #ContainerStartGame{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    position:fixed;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+
+}
+#ContainerFinJeu{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 3rem;
+    z-index: 1000;
+    position: fixed;
+    backdrop-filter: blur(7.5px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 1;
+    margin: 0;
+    
+}
+</style>
 
 <body>
     <audio src="{% static 'buzz.mp3' %}" type="audio/mpeg"></audio>
 
     
     <div id="ContainerFinJeu">
+        <div class="titlefinjeu">        
+            <h2>Partie terminée ! </h2>
+        </div>
         <div class="classement">
             <div id="winner" class="winner"><h2></h2></div>
         </div>
         <div class="FinJeu">
             <a href="/Game/?jeu={{jeu}}&nbPlayer={{nbPlayer}}" class="OptionFinJeu containerHover"><h1>Recommencer</h1></a>
             <a href="/" class="OptionFinJeu"><h1>Menu Principal</h1></a>
+        </div>
+    </div>
+    <div id="ContainerStartGame">
+        <div class="ChangementJoueur">
+            <h3 class="changement">Appuyez sur valider pour lancer la partie</h3>
         </div>
     </div>
     <div id="back" class="background">
@@ -351,7 +439,7 @@
 
     <script>
         StartGame();
-        Game();
+        waiting();
     </script>
     
 </body>
