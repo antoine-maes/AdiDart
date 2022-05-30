@@ -19,7 +19,7 @@
   
   <div class="background">
     <div class="text">
-      <h1>Choisissez votre mode de jeux </h1>
+      <h1>Choisissez votre mode de jeu </h1>
     </div>
     <div class="container-container">
       <a href="/ChoixJoueur/?jeu=301" class="container containerHover"><h1>301</h1></a>
@@ -41,6 +41,7 @@ document.addEventListener("keydown", (e) => {
   e = e || window.event;
   Array.from(containers).forEach(el => {
     el.classList.remove("containerHover")
+    console.log(index);
   });
   
 

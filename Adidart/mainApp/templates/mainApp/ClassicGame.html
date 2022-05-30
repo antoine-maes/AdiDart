@@ -29,9 +29,27 @@
         let PointTour = 0;
         let Player = 0;
 
+        function Detectzero(){
+            console.log("detectback");
+            document.addEventListener("keydown", (e) => {
+                e = e || window.event;
+
+                if(e.keyCode == 38){
+                    tir = 2;
+                    AsyncRep = 0;
+                    zero = true;
+                    out_msg=0;
+                    GameCalcPoints();
+                }
+            })
+        }
+
         function onConnect() {
             console.log("connected");
             mqtt.subscribe("data");
+            Game();
+            Detectzero();
+
         }
 
         function onFailure(message) {
@@ -54,6 +72,9 @@
             function ChangementJoueur(){
                 if (numPlayer == (nbPlayers-1)){
                     numPlayer = 0;
+                    round++
+                    document.getElementById("round").innerHTML="<h1>Round "+ round +"</h1>";
+
                 }
                 else{
                     numPlayer++;
@@ -92,9 +113,16 @@
 
                 
                 //display menu tir && change player
-                document.getElementById("tir1").style.opacity="0";
-                document.getElementById("tir2").style.opacity="0";
                 document.getElementById("tir3").style.opacity="0";
+                document.getElementById("t3").innerHTML="<h1>"+out_msg+"</h1>";
+                if (zero == true){
+                    document.getElementById("t1").innerHTML="";
+                    document.getElementById("t2").innerHTML="";
+                    document.getElementById("t3").innerHTML="";
+                    zero = false;
+
+
+                }
                 if (Points[numPlayer] != 0) {
                     document.getElementById("ContainerChangementJoueur").style.opacity="1";
                 }
@@ -120,8 +148,11 @@
                 if (AsyncRep == 1){
                     tir = 0;
                     PointTour = 0;
+                    document.getElementById("t1").innerHTML="<img id='tir1' src='{% static 'mainApp/dart.png' %}' />"
                     document.getElementById("tir1").style.opacity="1";
+                    document.getElementById("t2").innerHTML="<img id='tir2' src='{% static 'mainApp/dart.png' %}' />"
                     document.getElementById("tir2").style.opacity="1";
+                    document.getElementById("t3").innerHTML="<img id='tir3' src='{% static 'mainApp/dart.png' %}' />"
                     document.getElementById("tir3").style.opacity="1";
                     document.getElementById("ContainerChangementJoueur").style.opacity="0";
                     AsyncValidation = true;
@@ -135,31 +166,23 @@
             if(tir == 2){
                 validation = false;
                 //display menu tir
-                document.getElementById("tir1").style.opacity="0";
-                document.getElementById("tir2").style.opacity="0";
-                document.getElementById("tir3").style.opacity="1";
+                document.getElementById("t2").innerHTML="<h1>"+out_msg+"</h1>";
                 AsyncValidation = true;
                 PointTour = PointTour + parseInt(out_msg);
-
                 if (Points[numPlayer] < 0){
                     if(AsyncRep == 0){
                     Points[numPlayer]= Points[numPlayer] + PointTour;
                     affichageNumPlayer = numPlayer+1;
                     document.getElementById("Points"+numPlayer).innerHTML="<span style='font-size:2rem;margin:0;'>Joueur "+affichageNumPlayer +"</span><br>"+ Points[numPlayer];
                     document.getElementById("ContainerChangementJoueur").style.opacity="1";
-
                     await waitingKeypress();
                     }
-
                     if (AsyncRep == 1){
                         PointTour = 0;
                         document.getElementById("ContainerChangementJoueur").style.opacity="0";
-
                         ChangementJoueur();
                     }
                 }
-
-
                 //add points of the second tir in the a variable
             }
 
@@ -169,6 +192,8 @@
                 document.getElementById("tir1").style.opacity="0";
                 document.getElementById("tir2").style.opacity="1";
                 document.getElementById("tir3").style.opacity="1";
+                document.getElementById("t1").innerHTML="<h1>"+out_msg+"</h1>";
+
                 AsyncValidation = true;
                 PointTour = PointTour + parseInt(out_msg);
                 if (Points[numPlayer] < 0){
@@ -195,9 +220,15 @@
             if (AsyncValidation == true){
                 console.log(numPlayer);
                 console.log(PointTour);
-                mqtt.disconnect();
                 AsyncValidation = false;
                 validation = true;
+                zero = false;
+                for (Player=0; Player < nbPlayers; Player++){
+                    if (parseInt(Points[Player]) == 0){
+                        console.log("Game Over");
+                        EndGame();
+                    }
+                }
                 Game();
             }
         }
@@ -208,10 +239,6 @@
             out_msg=JSON.parse(msg.payloadString);
             mult = parseInt(out_msg.mult);
             value = parseInt(out_msg.value);
-            console.log(mult);
-            if (mult==100){
-                return
-            }
             out_msg = (value*mult);
             GameCalcPoints();  
         }
@@ -250,11 +277,12 @@
                 document.getElementById("Points"+numPlayer).innerHTML="<span style='font-size:2rem;margin:0;'>Joueur "+affichageNumPlayer +"</span><br>"+ Points[numPlayer];
             }
             numPlayer=0;
+            round = 1
             document.getElementById("Player"+numPlayer).style.background="rgba(255, 255, 255, 1)";
             document.getElementById("ContainerChangementJoueur").style.opacity="0";
             document.getElementById("ContainerFinJeu").style.opacity="0";
-
-
+            document.getElementById("confirmation").style.opacity="0";
+            document.getElementById("round").innerHTML="<h1>Round "+ round +"</h1>";
             PointTour = 0;
 
         }
@@ -300,13 +328,58 @@
             }
           })
         }
+        /*function MenuConfirmation(){
+            document.getElementById("confirmation").style.opacity="1";
+            let containers = document.getElementsByClassName("OptionConfirmation")
+            let index = 0;
+
+            document.addEventListener("keydown", (e) => {
+            e = e || window.event;
+            Array.from(containers).forEach(el => {
+              el.classList.remove("containerHover")
+        
+            });
+            console.log(index);
+          
+            if (e.keyCode === 38 && index === -1) {
+              location.href(containers[0].getAttribute("href"))
+            }
+            if (e.keyCode === 38 && index === 1) {
+                console.log("hahah")
+                document.getElementById("confirmation").style.opacity="0";
+                return
+            }
+          
+            if (e.keyCode === 37) {
+              if (index != 0) {
+                index--;
+              } else {
+                index = containers.length - 1;
+              }
+            } 
+            else if (e.keyCode === 39) {
+              if (index != containers.length - 1) {
+                index++
+              } else {
+                index = 0
+              }
+            }
+          
+            containers[index].classList.add("containerHover");
+          
+            if (e.keyCode === 38) {
+              window.location.href = containers[index].getAttribute("href")
+            }
+          })
+        }
+        */
         async function waiting(){
             console.log("Waiting for keypress...");
             document.getElementById("ContainerStartGame").style.opacity="1";
             await waitingKeypress();
             if (AsyncRep ==1){
                 document.getElementById("ContainerStartGame").style.opacity="0";
-                Game();
+                MQTTconnect();
             }
         }
 
@@ -314,17 +387,9 @@
             document.addEventListener("keydown", (e) => {
                 e = e || window.event;
                 if(e.keyCode == 40) {
-                    window.location.replace("/");
+                    window.location.href = "/";
                 }
             })
-            for (Player=0; Player < nbPlayers; Player++){
-                if (parseInt(Points[Player]) == 0){
-                    console.log("Game Over");
-                    EndGame();
-                    winner = Player;
-                }
-            }
-            MQTTconnect();
         }
     
     </script>
@@ -395,12 +460,64 @@
     z-index: 100;
     opacity: 1;
     margin: 0;
-    
 }
+#confirmation{
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 3rem;
+        z-index: 1000;
+        position: fixed;
+        backdrop-filter: blur(7.5px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 100;
+        opacity: 1;
+        margin: 0;
+    }
+    .container-confirm{
+        width: 50vw;
+        height: 150px;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: -200px;
+        background: rgba(255, 255, 255, 0.4);
+    }
+    .OptionConfirmation{
+        width: 300px;
+        height: 100px;
+        margin: 40px;
+        text-decoration: none;
+        box-sizing: border-box;
+        transition: all ease-in 0.2s;
+        color: black;
+        border-radius: 20px;
+        font-size: 1rem;
+        display: flex;
+        box-shadow: 0px 0px 15px rgba(0,0,0,0.1); 
+
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
 </style>
 
 <body>
     <audio src="{% static 'buzz.mp3' %}" type="audio/mpeg"></audio>
+    <div id="confirmation">
+        <div class="titlefinjeu">        
+            <h2>Voulez-vous quitter la partie ? </h2>
+        </div>
+        
+        <div class="container-confirm">
+            <a href="/" class="OptionConfirmation containerHover"><h1>Oui</h1></a>
+            <a href="/" class="OptionConfirmation"><h1>Non</h1></a>
+        </div>
+    </div>
 
     
     <div id="ContainerFinJeu">
@@ -421,13 +538,14 @@
         </div>
     </div>
     <div id="back" class="background">
+        <div id="round"><h1>Round 1</h1></div>
         <div id="cnt-pts" class="container-points">
               
         </div>
         <div class="container-tirs">
-            <div class="Tir"><img id="tir1" src="{% static "mainApp/dart.png" %}" /> </div>
-            <div class="Tir"><img id="tir2" src="{% static "mainApp/dart.png" %}" /></div>
-            <div class="Tir"><img id="tir3" src="{% static "mainApp/dart.png" %}" /></div>
+            <div id="t1"class="Tir"><img id="tir1" src="{% static "mainApp/dart.png" %}" /> </div>
+            <div id="t2"class="Tir"><img id="tir2" src="{% static "mainApp/dart.png" %}" /></div>
+            <div id="t3"class="Tir"><img id="tir3" src="{% static "mainApp/dart.png" %}" /></div>
         </div>
     </div>
     <div id="ContainerChangementJoueur">
